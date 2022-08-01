@@ -1,5 +1,6 @@
 import datetime
 import os
+import time
 
 
 def _compare_datetimes(datetime1, datetime2):
@@ -23,9 +24,10 @@ class CriticalException(Exception):
 
 
 class Log:
-    def __init__(self, logfile, age):
+    def __init__(self, logfile, age, timeout):
         self.logfile = logfile
         self.age = age
+        self.timeout = datetime.timedelta(seconds=timeout)
 
     def check_file_exists(self):
         if os.path.exists(self.logfile) and os.path.isfile(self.logfile):
@@ -76,35 +78,45 @@ class Log:
         return format_ok
 
     def check_messages(self):
-        data = self._read()
+        t = datetime.datetime.now()
+        while datetime.datetime.now() - t < self.timeout:
+            data = self._read()
 
-        younger_than_age = [
-            item for item in data if
-            _compare_datetimes(datetime.datetime.now(), item["datetime"]) <
-            self.age
-        ]
+            younger_than_age = [
+                item for item in data if
+                _compare_datetimes(datetime.datetime.now(), item["datetime"]) <
+                self.age
+            ]
 
-        warn_msgs = [
-            item["msg"] for item in younger_than_age if
-            item["level"] == "WARNING"
-        ]
+            warn_msgs = [
+                item["msg"] for item in younger_than_age if
+                item["level"] == "WARNING"
+            ]
 
-        crit_msgs = [
-            item["msg"] for item in younger_than_age if
-            item["level"] in ["CRITICAL", "ERROR"]
-        ]
+            crit_msgs = [
+                item["msg"] for item in younger_than_age if
+                item["level"] in ["CRITICAL", "ERROR"]
+            ]
 
-        if len(younger_than_age) > 0:
-            if len(crit_msgs) > 0:
-                raise CriticalException("\n".join(crit_msgs))
+            if len(younger_than_age) > 0:
+                if len(crit_msgs) > 0:
+                    raise CriticalException("\n".join(crit_msgs))
 
-            elif len(warn_msgs) > 0:
-                raise WarnException("\n".join(warn_msgs))
+                elif len(warn_msgs) > 0:
+                    raise WarnException("\n".join(warn_msgs))
+
+                else:
+                    if "finished" in younger_than_age[-1]["msg"]:
+                        return f"{younger_than_age[-1]['msg']}"
+
+                    else:
+                        time.sleep(30)
+                        continue
 
             else:
-                return f"{younger_than_age[-1]['msg']}"
+                raise CriticalException(
+                    f"argo-poem-packages not run in the past {self.age} hours"
+                )
 
         else:
-            raise CriticalException(
-                f"argo-poem-packages not run in the past {self.age} hours"
-            )
+            raise TimeoutError
