@@ -1,0 +1,67 @@
+#!/usr/bin/python3
+import argparse
+import sys
+
+from argo_probe_poem_tools.log import Log, CriticalException, WarnException
+from argo_probe_poem_tools.nagios import Nagios
+
+
+def main():
+    nagios = Nagios()
+
+    parser = argparse.ArgumentParser(
+        "Probe that checks argo-poem-tools execution", add_help=False
+    )
+    required = parser.add_argument_group("required arguments")
+    optional = parser.add_argument_group("optional arguments")
+    required.add_argument(
+        "-f", "--file", dest="file", type=str,
+        default="/var/log/argo-poem-tools/argo-poem-tools.log",
+        help="argo-poem-tools log file "
+             "(default: /var/log/argo-poem-tools/argo-poem-tools.log)"
+    )
+    required.add_argument(
+        "-a", "--age", dest="age", default=2, type=int,
+        help="maximum acceptable log age (default: 2 h)"
+    )
+    required.add_argument(
+        "-t", "--timeout", dest="timeout", default=90, type=float,
+        help="timeout"
+    )
+    optional.add_argument(
+        "-h", "--help", action="help", default=argparse.SUPPRESS,
+        help="Show this help message and exit"
+    )
+    args = parser.parse_args()
+
+    try:
+        log = Log(logfile=args.file, age=args.age, timeout=args.timeout)
+
+        if log.check_file_exists():
+            if log.check_format_ok():
+                nagios.ok(log.check_messages())
+
+            else:
+                nagios.critical("Wrong log file format")
+
+        else:
+            nagios.critical(f"Log file {args.file} does not exist")
+
+    except CriticalException as e:
+        nagios.critical(str(e))
+
+    except WarnException as e:
+        nagios.warning(str(e))
+
+    except TimeoutError:
+        nagios.critical("Timeout")
+
+    except Exception as e:
+        nagios.unknown(str(e))
+
+    print(nagios.get_msg())
+    sys.exit(nagios.get_code())
+
+
+if __name__ == "__main__":
+    main()
