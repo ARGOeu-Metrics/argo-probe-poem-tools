@@ -40,5 +40,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Mon Aug 1 2022 Katarina Zailac <katarina.zailac@gmail.com> - 0.1.0-1
+* Thu Aug 31 2022 Katarina Zailac <katarina.zailac@gmail.com> - 0.1.0-1
 - ARGO-3939 Probe for monitoring argo-poem-packages execution
