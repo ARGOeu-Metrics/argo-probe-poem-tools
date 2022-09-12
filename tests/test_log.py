@@ -1,6 +1,5 @@
 import datetime
 import os
-import time
 import unittest
 from unittest.mock import patch
 
@@ -116,6 +115,17 @@ mock_log_with_error = """
 2022-07-11 12:00:25 - argo-poem-packages - ERROR - Error installing packages: Command '['yum', 'list', 'available', '--showduplicates']' returned non-zero exit status 1.
 """
 
+mock_log_recovered = """
+2022-07-11 12:00:02 - argo-poem-packages - INFO - Sending request for profile(s): ARGO_MON
+2022-07-11 12:00:04 - argo-poem-packages - INFO - Creating YUM repo files...
+2022-07-11 12:00:04 - argo-poem-packages - INFO - Created files: /etc/yum.repos.d/UMD-4-untested.repo; /etc/yum.repos.d/UMD-4.repo; /etc/yum.repos.d/argo.repo; /etc/yum.repos.d/epel.repo; /etc/yum.repos.d/etf.repo
+2022-07-11 12:00:25 - argo-poem-packages - ERROR - Error installing packages: Command '['yum', 'list', 'available', '--showduplicates']' returned non-zero exit status 1.
+2022-07-11 13:00:02 - argo-poem-packages - INFO - Sending request for profile(s): ARGO_MON
+2022-07-11 13:00:05 - argo-poem-packages - INFO - Creating YUM repo files...
+2022-07-11 13:00:05 - argo-poem-packages - INFO - Created files: /etc/yum.repos.d/UMD-4.repo; /etc/yum.repos.d/argo.repo; /etc/yum.repos.d/epel.repo; /etc/yum.repos.d/etf.repo
+2022-07-11 13:00:44 - argo-poem-packages - INFO - The run finished successfully.
+"""
+
 
 class CheckLogTests(unittest.TestCase):
     def setUp(self):
@@ -125,6 +135,7 @@ class CheckLogTests(unittest.TestCase):
         self.logfile_wrong_format3 = "mock_file_wrong3.log"
         self.logfile_with_warn = "mock_file_warn.log"
         self.logfile_with_error = "mock_file_error.log"
+        self.logfile_with_recovery = "mock_file_recovery.log"
         with open(self.logfile, "w") as f:
             f.write(mock_ok_log)
         self.log = Log(logfile=self.logfile, age=2, timeout=10)
@@ -136,7 +147,8 @@ class CheckLogTests(unittest.TestCase):
         for logfile in [
             self.logfile, self.logfile_wrong_format1,
             self.logfile_wrong_format2, self.logfile_wrong_format3,
-            self.logfile_with_warn, self.logfile_with_error
+            self.logfile_with_warn, self.logfile_with_error,
+            self.logfile_with_recovery
         ]:
             if os.path.exists(logfile):
                 os.remove(logfile)
@@ -231,3 +243,14 @@ class CheckLogTests(unittest.TestCase):
             "Error installing packages: Command '['yum', 'list', 'available', "
             "'--showduplicates']' returned non-zero exit status 1."
         )
+
+    @patch("argo_probe_poem_tools.log._compare_datetimes")
+    def test_log_with_recovery(self, mock_compare):
+        mock_compare.return_value = 1
+        with open(self.logfile_with_recovery, "w") as f:
+            f.write(mock_log_recovered)
+
+        log = Log(logfile=self.logfile_with_recovery, age=2, timeout=10)
+
+        msg = log.check_messages()
+        self.assertEqual(msg, "The run finished successfully.")
