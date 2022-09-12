@@ -99,19 +99,18 @@ class Log:
             ]
 
             if len(younger_than_age) > 0:
-                if len(crit_msgs) > 0:
+                if "finished" in younger_than_age[-1]["msg"]:
+                    return f"{younger_than_age[-1]['msg']}"
+
+                elif len(crit_msgs) > 0:
                     raise CriticalException("\n".join(crit_msgs))
 
                 elif len(warn_msgs) > 0:
                     raise WarnException("\n".join(warn_msgs))
 
                 else:
-                    if "finished" in younger_than_age[-1]["msg"]:
-                        return f"{younger_than_age[-1]['msg']}"
-
-                    else:
-                        time.sleep(30)
-                        continue
+                    time.sleep(30)
+                    continue
 
             else:
                 raise CriticalException(
