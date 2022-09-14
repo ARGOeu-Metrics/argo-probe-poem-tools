@@ -44,8 +44,8 @@ pipeline {
                     steps {
                         sh '''
                             cd $WORKSPACE/$PROJECT_DIR/
-                            rm -f tests/argo_probe_poem_tools
-                            ln -s $PWD/modules/ tests/argo_probe_poem_tools
+                            rm -f tests/argo_probe_argo_tools
+                            ln -s $PWD/modules/ tests/argo_probe_argo_tools
                             coverage run -m xmlrunner discover --output-file junit.xml -v tests/
                             coverage xml
                         '''
