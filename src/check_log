@@ -10,15 +10,20 @@ def main():
     nagios = Nagios()
 
     parser = argparse.ArgumentParser(
-        "Probe that checks argo-poem-tools execution", add_help=False
+        "Probe that checks app log for errors", add_help=False
     )
     required = parser.add_argument_group("required arguments")
     optional = parser.add_argument_group("optional arguments")
     required.add_argument(
-        "-f", "--file", dest="file", type=str,
-        default="/var/log/argo-poem-tools/argo-poem-tools.log",
-        help="argo-poem-tools log file "
-             "(default: /var/log/argo-poem-tools/argo-poem-tools.log)"
+        "-f", "--file", dest="file", type=str, help="location of log file"
+    )
+    required.add_argument(
+        "-A", "--app", dest="app", type=str,
+        help="application whose log is being checked"
+    )
+    required.add_argument(
+        "-m", "--message", dest="message", type=str,
+        help="(part of) OK message expected in the log"
     )
     required.add_argument(
         "-a", "--age", dest="age", default=2, type=int,
@@ -26,7 +31,7 @@ def main():
     )
     required.add_argument(
         "-t", "--timeout", dest="timeout", default=90, type=float,
-        help="timeout"
+        help="timeout (default 90 s)"
     )
     optional.add_argument(
         "-h", "--help", action="help", default=argparse.SUPPRESS,
@@ -35,7 +40,10 @@ def main():
     args = parser.parse_args()
 
     try:
-        log = Log(logfile=args.file, age=args.age, timeout=args.timeout)
+        log = Log(
+            app=args.app, logfile=args.file, age=args.age,
+            message=args.message, timeout=args.timeout
+        )
 
         if log.check_file_exists():
             if log.check_format_ok():
