@@ -1,4 +1,4 @@
-PKGNAME=argo-probe-poem-tools
+PKGNAME=argo-probe-argo-tools
 SPECFILE=${PKGNAME}.spec
 
 PKGVERSION=$(shell grep -s '^Version:' $(SPECFILE) | sed -e 's/Version: *//')

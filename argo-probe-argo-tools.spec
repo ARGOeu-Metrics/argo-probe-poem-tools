@@ -1,7 +1,7 @@
 %define underscore() %(echo %1 | sed 's/-/_/g')
 
-Summary:       ARGO probe that inspects the execution of argo-poem-tools
-Name:          argo-probe-poem-tools
+Summary:       ARGO probe that inspects the application log file for errors
+Name:          argo-probe-argo-tools
 Version:       0.1.0
 Release:       1%{?dist}
 Source0:       %{name}-%{version}.tar.gz
@@ -15,7 +15,7 @@ BuildRequires: python3-devel
 
 
 %description
-ARGO probe that inspects the execution of argo-poem-tools
+ARGO probe that inspects the application log file for errors
 
 %prep
 %setup -q

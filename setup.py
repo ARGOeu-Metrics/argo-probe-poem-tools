@@ -1,7 +1,6 @@
 from distutils.core import setup
 
-
-NAME = "argo-probe-poem-tools"
+NAME = "argo-probe-argo-tools"
 
 
 def get_ver():
@@ -19,9 +18,9 @@ setup(
     version=get_ver(),
     author="SRCE",
     author_email="kzailac@srce.hr",
-    description="ARGO probe that inspects the execution of argo-poem-tools",
-    url="https://github.com/ARGOeu-Metrics/argo-probe-poem-tools",
-    package_dir={'argo_probe_poem_tools': 'modules'},
-    packages=['argo_probe_poem_tools'],
-    data_files=[('/usr/libexec/argo/probes/poem_tools', ['src/check_log'])]
+    description="ARGO probe that inspects the application log file for errors",
+    url="https://github.com/ARGOeu-Metrics/argo-probe-argo-tools",
+    package_dir={'argo_probe_argo_tools': 'modules'},
+    packages=['argo_probe_argo_tools'],
+    data_files=[('/usr/libexec/argo/probes/argo_tools', ['src/check_log'])]
 )
