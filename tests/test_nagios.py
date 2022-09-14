@@ -1,6 +1,6 @@
 import unittest
 
-from argo_probe_poem_tools.nagios import Nagios
+from argo_probe_argo_tools.nagios import Nagios
 
 
 class NagiosTests(unittest.TestCase):
