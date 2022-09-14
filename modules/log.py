@@ -24,7 +24,8 @@ class CriticalException(Exception):
 
 
 class Log:
-    def __init__(self, logfile, age, timeout):
+    def __init__(self, app, logfile, age, timeout):
+        self.app = app
         self.logfile = logfile
         self.age = age
         self.timeout = datetime.timedelta(seconds=timeout)
@@ -62,7 +63,7 @@ class Log:
             data = self._read()
 
             apps = set([item["app"] for item in data])
-            if not (len(apps) == 1 and "argo-poem-packages" in apps):
+            if not (len(apps) == 1 and self.app in apps):
                 format_ok = False
 
             levels = set([item["level"] for item in data])
@@ -114,7 +115,7 @@ class Log:
 
             else:
                 raise CriticalException(
-                    f"argo-poem-packages not run in the past {self.age} hours"
+                    f"{self.app} not run in the past {self.age} hours"
                 )
 
         else:

@@ -138,9 +138,12 @@ class CheckLogTests(unittest.TestCase):
         self.logfile_with_recovery = "mock_file_recovery.log"
         with open(self.logfile, "w") as f:
             f.write(mock_ok_log)
-        self.log = Log(logfile=self.logfile, age=2, timeout=10)
+        self.log = Log(
+            app="argo-poem-packages", logfile=self.logfile, age=2, timeout=10
+        )
         self.log_missing_file = Log(
-            logfile="missing_file.log", age=2, timeout=10
+            app="argo-poem-packages", logfile="missing_file.log", age=2,
+            timeout=10
         )
 
     def tearDown(self):
@@ -173,7 +176,9 @@ class CheckLogTests(unittest.TestCase):
         mock_compare.return_value = 1
         with open(self.logfile, "w") as f:
             f.write(mock_ok_log_with_dash_in_msg)
-        log = Log(logfile=self.logfile, age=2, timeout=10)
+        log = Log(
+            app="argo-poem-packages", logfile=self.logfile, age=2, timeout=10
+        )
         self.assertTrue(log.check_file_exists())
         msg = log.check_messages()
         self.assertEqual(msg, "The run finished - successfully.")
@@ -202,9 +207,18 @@ class CheckLogTests(unittest.TestCase):
         with open(self.logfile_wrong_format3, "w") as f:
             f.write(mock_wrong_format3)
 
-        log1 = Log(logfile=self.logfile_wrong_format1, age=2, timeout=10)
-        log2 = Log(logfile=self.logfile_wrong_format2, age=2, timeout=10)
-        log3 = Log(logfile=self.logfile_wrong_format3, age=2, timeout=10)
+        log1 = Log(
+            app="argo-poem-packages", logfile=self.logfile_wrong_format1, age=2,
+            timeout=10
+        )
+        log2 = Log(
+            app="argo-poem-packages", logfile=self.logfile_wrong_format2, age=2,
+            timeout=10
+        )
+        log3 = Log(
+            app="argo-poem-packages", logfile=self.logfile_wrong_format3, age=2,
+            timeout=10
+        )
 
         self.assertFalse(log1.check_format_ok())
         self.assertFalse(log2.check_format_ok())
@@ -216,7 +230,10 @@ class CheckLogTests(unittest.TestCase):
         with open(self.logfile_with_warn, "w") as f:
             f.write(mock_log_with_warn)
 
-        log = Log(logfile=self.logfile_with_warn, age=2, timeout=10)
+        log = Log(
+            app="argo-poem-packages", logfile=self.logfile_with_warn, age=2,
+            timeout=10
+        )
 
         with self.assertRaises(WarnException) as context:
             log.check_messages()
@@ -233,7 +250,10 @@ class CheckLogTests(unittest.TestCase):
         with open(self.logfile_with_error, "w") as f:
             f.write(mock_log_with_error)
 
-        log = Log(logfile=self.logfile_with_error, age=2, timeout=10)
+        log = Log(
+            app="argo-poem-packages", logfile=self.logfile_with_error, age=2,
+            timeout=10
+        )
 
         with self.assertRaises(CriticalException) as context:
             log.check_messages()
@@ -250,7 +270,10 @@ class CheckLogTests(unittest.TestCase):
         with open(self.logfile_with_recovery, "w") as f:
             f.write(mock_log_recovered)
 
-        log = Log(logfile=self.logfile_with_recovery, age=2, timeout=10)
+        log = Log(
+            app="argo-poem-packages", logfile=self.logfile_with_recovery, age=2,
+            timeout=10
+        )
 
         msg = log.check_messages()
         self.assertEqual(msg, "The run finished successfully.")
