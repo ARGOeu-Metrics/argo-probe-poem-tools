@@ -24,10 +24,11 @@ class CriticalException(Exception):
 
 
 class Log:
-    def __init__(self, app, logfile, age, timeout):
+    def __init__(self, app, logfile, age, message, timeout):
         self.app = app
         self.logfile = logfile
         self.age = age
+        self.message = message
         self.timeout = datetime.timedelta(seconds=timeout)
 
     def check_file_exists(self):
@@ -62,7 +63,7 @@ class Log:
         try:
             data = self._read()
 
-            apps = set([item["app"] for item in data])
+            apps = set([item["app"].split(".")[0] for item in data])
             if not (len(apps) == 1 and self.app in apps):
                 format_ok = False
 
@@ -100,7 +101,7 @@ class Log:
             ]
 
             if len(younger_than_age) > 0:
-                if "finished" in younger_than_age[-1]["msg"]:
+                if self.message in younger_than_age[-1]["msg"].lower():
                     return f"{younger_than_age[-1]['msg']}"
 
                 elif len(crit_msgs) > 0:

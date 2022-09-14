@@ -25,6 +25,21 @@ mock_ok_log = """
 2022-08-01 10:00:44 - argo-poem-packages - INFO - The run finished successfully.
 """
 
+mock_ok_log2 = """
+2022-09-14 10:15:01 - argo-scg - INFO - Configuration file /etc/argo-scg/scg.conf read successfully
+2022-09-14 10:15:02 - argo-scg.poem - INFO - default: Metrics fetched successfully
+2022-09-14 10:15:02 - argo-scg.webapi - INFO - default: Metric profiles fetched successfully
+2022-09-14 10:15:02 - argo-scg.poem - INFO - default: Metric overrides fetched successfully
+2022-09-14 10:15:04 - argo-scg.poem - INFO - internal: Metrics fetched successfully
+2022-09-14 10:15:04 - argo-scg.webapi - INFO - internal: Metric profiles fetched successfully
+2022-09-14 10:15:04 - argo-scg.poem - INFO - internal: Metric overrides fetched successfully
+2022-09-14 10:15:05 - argo-scg.webapi - INFO - NI4OS: Topology endpoints fetched successfully
+2022-09-14 10:15:13 - argo-scg.poem - INFO - NI4OS: Metrics fetched successfully
+2022-09-14 10:15:13 - argo-scg.webapi - INFO - NI4OS: Metric profiles fetched successfully
+2022-09-14 10:15:14 - argo-scg.poem - INFO - NI4OS: Metric overrides fetched successfully
+2022-09-14 10:15:14 - argo-scg - INFO - Done
+"""
+
 mock_wrong_format1 = """
 2022-08-01 04:00:02 - argo-poem-packages - INFO - Sending request for profile(s): ARGO_MON
 2022-08-01 04:00:05 - argo-poem-packages - INFO - Creating YUM repo files...
@@ -139,11 +154,12 @@ class CheckLogTests(unittest.TestCase):
         with open(self.logfile, "w") as f:
             f.write(mock_ok_log)
         self.log = Log(
-            app="argo-poem-packages", logfile=self.logfile, age=2, timeout=10
+            app="argo-poem-packages", logfile=self.logfile, age=2,
+            message="finished", timeout=10
         )
         self.log_missing_file = Log(
             app="argo-poem-packages", logfile="missing_file.log", age=2,
-            timeout=10
+            message="finished", timeout=10
         )
 
     def tearDown(self):
@@ -177,11 +193,25 @@ class CheckLogTests(unittest.TestCase):
         with open(self.logfile, "w") as f:
             f.write(mock_ok_log_with_dash_in_msg)
         log = Log(
-            app="argo-poem-packages", logfile=self.logfile, age=2, timeout=10
+            app="argo-poem-packages", logfile=self.logfile, age=2,
+            message="finished", timeout=10
         )
         self.assertTrue(log.check_file_exists())
         msg = log.check_messages()
         self.assertEqual(msg, "The run finished - successfully.")
+
+    @patch("argo_probe_argo_tools.log._compare_datetimes")
+    def test_log_ok_with_dotted_app_name(self, mock_compare):
+        mock_compare.return_value = 1
+        with open(self.logfile, "w") as f:
+            f.write(mock_ok_log2)
+        log = Log(
+            app="argo-scg", logfile=self.logfile, age=2, message="done",
+            timeout=10
+        )
+        self.assertTrue(log.check_format_ok())
+        msg = log.check_messages()
+        self.assertEqual(msg, "Done")
 
     @patch("argo_probe_argo_tools.log._compare_datetimes")
     def test_log_older_than_age(self, mock_compare):
@@ -209,15 +239,15 @@ class CheckLogTests(unittest.TestCase):
 
         log1 = Log(
             app="argo-poem-packages", logfile=self.logfile_wrong_format1, age=2,
-            timeout=10
+            message="finished", timeout=10
         )
         log2 = Log(
             app="argo-poem-packages", logfile=self.logfile_wrong_format2, age=2,
-            timeout=10
+            message="finished", timeout=10
         )
         log3 = Log(
             app="argo-poem-packages", logfile=self.logfile_wrong_format3, age=2,
-            timeout=10
+            message="finished", timeout=10
         )
 
         self.assertFalse(log1.check_format_ok())
@@ -232,7 +262,7 @@ class CheckLogTests(unittest.TestCase):
 
         log = Log(
             app="argo-poem-packages", logfile=self.logfile_with_warn, age=2,
-            timeout=10
+            message="finished", timeout=10
         )
 
         with self.assertRaises(WarnException) as context:
@@ -252,7 +282,7 @@ class CheckLogTests(unittest.TestCase):
 
         log = Log(
             app="argo-poem-packages", logfile=self.logfile_with_error, age=2,
-            timeout=10
+            message="finished", timeout=10
         )
 
         with self.assertRaises(CriticalException) as context:
@@ -272,7 +302,7 @@ class CheckLogTests(unittest.TestCase):
 
         log = Log(
             app="argo-poem-packages", logfile=self.logfile_with_recovery, age=2,
-            timeout=10
+            message="finished", timeout=10
         )
 
         msg = log.check_messages()
