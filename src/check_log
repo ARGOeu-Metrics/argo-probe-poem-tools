@@ -10,20 +10,19 @@ def main():
     nagios = Nagios()
 
     parser = argparse.ArgumentParser(
-        "Probe that checks app log for errors", add_help=False
+        add_help=False,
+        usage="Probe that checks app log for errors -f FILE -A APP -a AGE "
+              "-t TIMEOUT [-h]"
     )
     required = parser.add_argument_group("required arguments")
     optional = parser.add_argument_group("optional arguments")
     required.add_argument(
-        "-f", "--file", dest="file", type=str, help="location of log file"
+        "-f", "--file", dest="file", type=str, help="location of log file",
+        required=True
     )
     required.add_argument(
-        "-A", "--app", dest="app", type=str,
+        "-A", "--app", dest="app", type=str, required=True,
         help="application whose log is being checked"
-    )
-    required.add_argument(
-        "-m", "--message", dest="message", type=str,
-        help="(part of) OK message expected in the log"
     )
     required.add_argument(
         "-a", "--age", dest="age", default=2, type=int,
@@ -41,8 +40,7 @@ def main():
 
     try:
         log = Log(
-            app=args.app, logfile=args.file, age=args.age,
-            message=args.message, timeout=args.timeout
+            app=args.app, logfile=args.file, age=args.age, timeout=args.timeout
         )
 
         if log.check_file_exists():

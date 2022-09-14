@@ -24,11 +24,10 @@ class CriticalException(Exception):
 
 
 class Log:
-    def __init__(self, app, logfile, age, message, timeout):
+    def __init__(self, app, logfile, age, timeout):
         self.app = app
         self.logfile = logfile
         self.age = age
-        self.message = message
         self.timeout = datetime.timedelta(seconds=timeout)
 
     def check_file_exists(self):
@@ -90,25 +89,31 @@ class Log:
                 self.age
             ]
 
+            only_last_execution = [
+                item for item in younger_than_age if (
+                    younger_than_age[-1]["datetime"] - item["datetime"]
+                ).total_seconds() < 900
+            ]
+
             warn_msgs = [
-                item["msg"] for item in younger_than_age if
+                item["msg"] for item in only_last_execution if
                 item["level"] == "WARNING"
             ]
 
             crit_msgs = [
-                item["msg"] for item in younger_than_age if
+                item["msg"] for item in only_last_execution if
                 item["level"] in ["CRITICAL", "ERROR"]
             ]
 
-            if len(younger_than_age) > 0:
-                if self.message in younger_than_age[-1]["msg"].lower():
-                    return f"{younger_than_age[-1]['msg']}"
-
-                elif len(crit_msgs) > 0:
+            if len(only_last_execution) > 0:
+                if len(crit_msgs) > 0:
                     raise CriticalException("\n".join(crit_msgs))
 
                 elif len(warn_msgs) > 0:
                     raise WarnException("\n".join(warn_msgs))
+
+                elif only_last_execution[-1]["level"] == "INFO":
+                    return f"{only_last_execution[-1]['msg']}"
 
                 else:
                     time.sleep(30)
