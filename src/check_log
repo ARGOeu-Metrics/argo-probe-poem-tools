@@ -2,8 +2,8 @@
 import argparse
 import sys
 
-from argo_probe_poem_tools.log import Log, CriticalException, WarnException
-from argo_probe_poem_tools.nagios import Nagios
+from argo_probe_argo_tools.log import Log, CriticalException, WarnException
+from argo_probe_argo_tools.nagios import Nagios
 
 
 def main():

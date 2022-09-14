@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from argo_probe_poem_tools.log import Log, _compare_datetimes, \
+from argo_probe_argo_tools.log import Log, _compare_datetimes, \
     CriticalException, WarnException
 
 mock_ok_log = """
@@ -161,14 +161,14 @@ class CheckLogTests(unittest.TestCase):
         self.assertEqual(_compare_datetimes(datetime2, datetime1), 1)
         self.assertEqual(_compare_datetimes(datetime3, datetime1), 3)
 
-    @patch("argo_probe_poem_tools.log._compare_datetimes")
+    @patch("argo_probe_argo_tools.log._compare_datetimes")
     def test_log_ok(self, mock_compare):
         mock_compare.return_value = 1
         self.assertTrue(self.log.check_file_exists())
         msg = self.log.check_messages()
         self.assertEqual(msg, "The run finished successfully.")
 
-    @patch("argo_probe_poem_tools.log._compare_datetimes")
+    @patch("argo_probe_argo_tools.log._compare_datetimes")
     def test_log_ok_with_dash(self, mock_compare):
         mock_compare.return_value = 1
         with open(self.logfile, "w") as f:
@@ -178,7 +178,7 @@ class CheckLogTests(unittest.TestCase):
         msg = log.check_messages()
         self.assertEqual(msg, "The run finished - successfully.")
 
-    @patch("argo_probe_poem_tools.log._compare_datetimes")
+    @patch("argo_probe_argo_tools.log._compare_datetimes")
     def test_log_older_than_age(self, mock_compare):
         mock_compare.return_value = 3
         self.assertTrue(self.log.check_file_exists())
@@ -210,7 +210,7 @@ class CheckLogTests(unittest.TestCase):
         self.assertFalse(log2.check_format_ok())
         self.assertFalse(log3.check_format_ok())
 
-    @patch("argo_probe_poem_tools.log._compare_datetimes")
+    @patch("argo_probe_argo_tools.log._compare_datetimes")
     def test_log_with_warn(self, mock_compare):
         mock_compare.return_value = 1
         with open(self.logfile_with_warn, "w") as f:
@@ -227,7 +227,7 @@ class CheckLogTests(unittest.TestCase):
             "nagios-plugins-grycap-im-0.1.3"
         )
 
-    @patch("argo_probe_poem_tools.log._compare_datetimes")
+    @patch("argo_probe_argo_tools.log._compare_datetimes")
     def test_log_with_error(self, mock_compare):
         mock_compare.return_value = 1
         with open(self.logfile_with_error, "w") as f:
@@ -244,7 +244,7 @@ class CheckLogTests(unittest.TestCase):
             "'--showduplicates']' returned non-zero exit status 1."
         )
 
-    @patch("argo_probe_poem_tools.log._compare_datetimes")
+    @patch("argo_probe_argo_tools.log._compare_datetimes")
     def test_log_with_recovery(self, mock_compare):
         mock_compare.return_value = 1
         with open(self.logfile_with_recovery, "w") as f:
