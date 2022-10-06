@@ -24,7 +24,8 @@ class CriticalException(Exception):
 
 
 class Log:
-    def __init__(self, logfile, age, timeout):
+    def __init__(self, app, logfile, age, timeout):
+        self.app = app
         self.logfile = logfile
         self.age = age
         self.timeout = datetime.timedelta(seconds=timeout)
@@ -61,8 +62,8 @@ class Log:
         try:
             data = self._read()
 
-            apps = set([item["app"] for item in data])
-            if not (len(apps) == 1 and "argo-poem-packages" in apps):
+            apps = set([item["app"].split(".")[0] for item in data])
+            if not (len(apps) == 1 and self.app in apps):
                 format_ok = False
 
             levels = set([item["level"] for item in data])
@@ -88,34 +89,39 @@ class Log:
                 self.age
             ]
 
+            only_last_execution = [
+                item for item in younger_than_age if (
+                    younger_than_age[-1]["datetime"] - item["datetime"]
+                ).total_seconds() < 900
+            ]
+
             warn_msgs = [
-                item["msg"] for item in younger_than_age if
+                item["msg"] for item in only_last_execution if
                 item["level"] == "WARNING"
             ]
 
             crit_msgs = [
-                item["msg"] for item in younger_than_age if
+                item["msg"] for item in only_last_execution if
                 item["level"] in ["CRITICAL", "ERROR"]
             ]
 
-            if len(younger_than_age) > 0:
+            if len(only_last_execution) > 0:
                 if len(crit_msgs) > 0:
                     raise CriticalException("\n".join(crit_msgs))
 
                 elif len(warn_msgs) > 0:
                     raise WarnException("\n".join(warn_msgs))
 
-                else:
-                    if "finished" in younger_than_age[-1]["msg"]:
-                        return f"{younger_than_age[-1]['msg']}"
+                elif only_last_execution[-1]["level"] == "INFO":
+                    return f"{only_last_execution[-1]['msg']}"
 
-                    else:
-                        time.sleep(30)
-                        continue
+                else:
+                    time.sleep(30)
+                    continue
 
             else:
                 raise CriticalException(
-                    f"argo-poem-packages not run in the past {self.age} hours"
+                    f"{self.app} not run in the past {self.age} hours"
                 )
 
         else:
