@@ -68,3 +68,14 @@ class FileTests(unittest.TestCase):
             context.exception.__str__(),
             "File mock_file.log last modified 4 hours ago"
         )
+
+    def test_content(self):
+        self.filecheck.check_content("No serious problems were detected")
+
+        with self.assertRaises(CriticalException) as context:
+            self.filecheck.check_content("Nonexisting content")
+
+        self.assertEqual(
+            context.exception.__str__(),
+            "File mock_file.log does not contain 'Nonexisting content' string"
+        )

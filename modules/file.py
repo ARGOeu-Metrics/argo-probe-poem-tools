@@ -17,7 +17,7 @@ class File:
         with open(self.filename, "r") as f:
             data = [line for line in f.readlines()]
 
-        return data
+        return "\n".join(data)
 
     def check_existence(self):
         return does_file_exist(self.filename)
@@ -34,4 +34,12 @@ class File:
             raise CriticalException(
                 f"File {self.filename} last modified {hours_since_modified} "
                 f"hours ago"
+            )
+
+    def check_content(self, string):
+        content = self._read()
+
+        if string not in content:
+            raise CriticalException(
+                f"File {self.filename} does not contain '{string}' string"
             )
