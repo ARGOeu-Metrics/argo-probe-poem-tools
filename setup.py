@@ -22,5 +22,8 @@ setup(
     url="https://github.com/ARGOeu-Metrics/argo-probe-argo-tools",
     package_dir={'argo_probe_argo_tools': 'modules'},
     packages=['argo_probe_argo_tools'],
-    data_files=[('/usr/libexec/argo/probes/argo_tools', ['src/check_log'])]
+    data_files=[
+        ('/usr/libexec/argo/probes/argo_tools',
+         ['src/check_log', 'src/check_file'])
+    ]
 )

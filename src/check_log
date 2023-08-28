@@ -11,8 +11,7 @@ def main():
 
     parser = argparse.ArgumentParser(
         add_help=False,
-        usage="Probe that checks app log for errors -f FILE -A APP -a AGE "
-              "-t TIMEOUT [-h]"
+        description="Nagios probe checking logfile messages"
     )
     required = parser.add_argument_group("required arguments")
     optional = parser.add_argument_group("optional arguments")
@@ -24,11 +23,11 @@ def main():
         "-A", "--app", dest="app", type=str, required=True,
         help="application whose log is being checked"
     )
-    required.add_argument(
+    optional.add_argument(
         "-a", "--age", dest="age", default=2, type=int,
         help="maximum acceptable log age (default: 2 h)"
     )
-    required.add_argument(
+    optional.add_argument(
         "-t", "--timeout", dest="timeout", default=90, type=float,
         help="timeout (default 90 s)"
     )

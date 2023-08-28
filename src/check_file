@@ -1,0 +1,91 @@
+#!/usr/bin/python3
+import argparse
+import signal
+import sys
+
+from argo_probe_argo_tools.file import File
+from argo_probe_argo_tools.nagios import Nagios
+from argo_probe_argo_tools.utils import CriticalException
+
+
+class timeout:
+    def __init__(self, seconds=1, error_message="Timeout"):
+        self.seconds = seconds
+        self.error_message = error_message
+
+    def handle_timeout(self, signum, frame):
+        raise TimeoutError(self.error_message)
+
+    def __enter__(self):
+        signal.signal(signal.SIGALRM, self.handle_timeout)
+        signal.alarm(self.seconds)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        signal.alarm(0)
+
+
+def main():
+    nagios = Nagios()
+
+    parser = argparse.ArgumentParser(
+        description="Nagios probe for checking file age and content; it raises "
+                    "critical status if file age is greater than maximum "
+                    "acceptable age or the requested content is not found in "
+                    "the file",
+        usage="check_file [-h] -f FILE -T TIME -s STRING [-t TIMEOUT]",
+        add_help=False
+    )
+    required = parser.add_argument_group("required arguments")
+    optional = parser.add_argument_group("optional arguments")
+    required.add_argument(
+        "-f", "--file", type=str, dest="file", required=True,
+        help="Location of file being checked"
+    )
+    required.add_argument(
+        "-T", "--time", type=int, dest="time", required=True,
+        help="Maximum acceptable time (in hours) since file was last modified"
+    )
+    required.add_argument(
+        "-s", "--string", type=str, dest="string", required=True,
+        help="The string which must exist in the file if the probe is to "
+             "return OK status"
+    )
+    optional.add_argument(
+        "-t", "--timeout", type=int, dest="timeout", default=10,
+        help="Time in seconds after which the probe will stop execution and "
+             "return CRITICAL (default: 10)"
+    )
+    optional.add_argument(
+        "-h", "--help", action="help", default=argparse.SUPPRESS,
+        help="Show this help message and exit"
+    )
+    args = parser.parse_args()
+
+    try:
+        with timeout(seconds=args.timeout):
+            filecheck = File(filename=args.file)
+
+            if filecheck.check_existence():
+                filecheck.check_age(age=args.time)
+                filecheck.check_content(string=args.string)
+
+                nagios.ok("File is OK")
+
+            else:
+                nagios.critical(f"File {args.file} does not exist")
+
+    except CriticalException as e:
+        nagios.critical(str(e))
+
+    except TimeoutError:
+        nagios.critical("Timeout")
+
+    except Exception as e:
+        nagios.unknown(str(e))
+
+    print(nagios.get_msg())
+    sys.exit(nagios.get_code())
+
+
+if __name__ == "__main__":
+    main()
