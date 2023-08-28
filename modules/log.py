@@ -1,27 +1,12 @@
 import datetime
 import time
 
-from argo_probe_argo_tools.utils import does_file_exist
+from argo_probe_argo_tools.utils import does_file_exist, WarnException, \
+    CriticalException
 
 
 def _compare_datetimes(datetime1, datetime2):
     return divmod((datetime1 - datetime2).total_seconds(), 3600)[0]
-
-
-class WarnException(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return self.msg
-
-
-class CriticalException(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return self.msg
 
 
 class Log:
