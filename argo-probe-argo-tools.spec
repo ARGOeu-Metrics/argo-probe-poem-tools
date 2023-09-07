@@ -2,7 +2,7 @@
 
 Summary:       ARGO probe that inspects the application log file for errors
 Name:          argo-probe-argo-tools
-Version:       0.1.1
+Version:       0.2.0
 Release:       1%{?dist}
 Source0:       %{name}-%{version}.tar.gz
 License:       ASL 2.0
@@ -40,6 +40,8 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Sep 7 2023 Katarina Zailac <katarina.zailac@gmail.com> - 0.2.0-1
+- ARGO-4377 Create generic probe that checks file
 * Thu Oct 6 2022 Katarina Zailac <katarina.zailac@gmail.com> - 0.1.1-1
 - ARGO-3985 Probe for argo-poem-tools returning critical when it shouldn't
 - ARGO-3946 Probe for argo-scg execution
