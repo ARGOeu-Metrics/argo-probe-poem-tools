@@ -11,50 +11,29 @@ pipeline {
 
     }
     stages {
-        stage ('Build Centos 7 RPM') {
-            agent {
-                docker {
-                    image 'argo.registry:5000/epel-7-ams'
-                    args '-u jenkins:jenkins'
-                }
-            }
-            steps {
-                echo 'Building Rpm...'
-                withCredentials(bindings: [sshUserPrivateKey(credentialsId: 'jenkins-rpm-repo', usernameVariable: 'REPOUSER', \
-                                                            keyFileVariable: 'REPOKEY')]) {
-                    sh "/home/jenkins/build-rpm.sh -w ${WORKSPACE} -b ${BRANCH_NAME} -d centos7 -p ${PROJECT_DIR} -s ${REPOKEY}"
-                }
-                archiveArtifacts artifacts: '**/*.rpm', fingerprint: true
-            }
-            post {
-                always {
-                    cleanWs()
-                }
-            }
-        }
-        stage ('Build Rocky 9 RPM') {
-            agent {
-                docker {
-                    image 'argo.registry:5000/epel-9-ams'
-                    args '-u jenkins:jenkins'
-                }
-            }
-            steps {
-                echo 'Building Rpm...'
-                withCredentials(bindings: [sshUserPrivateKey(credentialsId: 'jenkins-rpm-repo', usernameVariable: 'REPOUSER', \
-                                                            keyFileVariable: 'REPOKEY')]) {
-                    sh "/home/jenkins/build-rpm.sh -w ${WORKSPACE} -b ${BRANCH_NAME} -d rocky9 -p ${PROJECT_DIR} -s ${REPOKEY}"
-                }
-                archiveArtifacts artifacts: '**/*.rpm', fingerprint: true
-            }
-            post {
-                always {
-                    cleanWs()
-                }
-            }
-        }
-        stage ('Tests'){
+        stage ('Build'){
             parallel {
+                stage ('Build Centos 7 RPM') {
+                    agent {
+                        docker {
+                            image 'argo.registry:5000/epel-7-ams'
+                            args '-u jenkins:jenkins'
+                        }
+                    }
+                    steps {
+                        echo 'Building Rpm...'
+                        withCredentials(bindings: [sshUserPrivateKey(credentialsId: 'jenkins-rpm-repo', usernameVariable: 'REPOUSER', \
+                                                                    keyFileVariable: 'REPOKEY')]) {
+                            sh "/home/jenkins/build-rpm.sh -w ${WORKSPACE} -b ${BRANCH_NAME} -d centos7 -p ${PROJECT_DIR} -s ${REPOKEY}"
+                        }
+                        archiveArtifacts artifacts: '**/*.rpm', fingerprint: true
+                    }
+                    post {
+                        always {
+                            cleanWs()
+                        }
+                    }
+                }
                 stage ('Execute tests on CentOS 7') {
                     agent {
                         docker {
@@ -72,6 +51,27 @@ pipeline {
                         '''
                         cobertura coberturaReportFile: '**/coverage.xml'
                         junit '**/junit.xml'
+                    }
+                }
+                stage ('Build Rocky 9 RPM') {
+                    agent {
+                        docker {
+                            image 'argo.registry:5000/epel-9-ams'
+                            args '-u jenkins:jenkins'
+                        }
+                    }
+                    steps {
+                        echo 'Building Rpm...'
+                        withCredentials(bindings: [sshUserPrivateKey(credentialsId: 'jenkins-rpm-repo', usernameVariable: 'REPOUSER', \
+                                                                    keyFileVariable: 'REPOKEY')]) {
+                            sh "/home/jenkins/build-rpm.sh -w ${WORKSPACE} -b ${BRANCH_NAME} -d rocky9 -p ${PROJECT_DIR} -s ${REPOKEY}"
+                        }
+                        archiveArtifacts artifacts: '**/*.rpm', fingerprint: true
+                    }
+                    post {
+                        always {
+                            cleanWs()
+                        }
                     }
                 }
                 stage ('Execute tests on Rocky 9') {
