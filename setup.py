@@ -1,3 +1,4 @@
+import glob
 from distutils.core import setup
 
 NAME = "argo-probe-argo-tools"
@@ -23,7 +24,6 @@ setup(
     package_dir={'argo_probe_argo_tools': 'modules'},
     packages=['argo_probe_argo_tools'],
     data_files=[
-        ('/usr/libexec/argo/probes/argo_tools',
-         ['src/check_log', 'src/check_file'])
+        ('/usr/libexec/argo/probes/argo_tools', glob.glob("src/*"))
     ]
 )

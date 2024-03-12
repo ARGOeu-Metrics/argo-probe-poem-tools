@@ -17,6 +17,7 @@ BuildRequires: python3-devel
 %description
 ARGO probe that inspects the application log file for errors
 
+
 %prep
 %setup -q
 
@@ -36,7 +37,6 @@ rm -rf $RPM_BUILD_ROOT
 %files -f INSTALLED_FILES
 %defattr(-,root,root)
 %dir %{python3_sitelib}/%{underscore %{name}}/
-%{python3_sitelib}/%{underscore %{name}}/*.py
 
 
 %changelog
