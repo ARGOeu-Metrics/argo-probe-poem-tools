@@ -3,15 +3,15 @@ import argparse
 import sys
 
 from argo_probe_argo_tools.log import Log, CriticalException, WarnException
-from argo_probe_argo_tools.nagios import Nagios
+from argo_probe_argo_tools.status import Status
 
 
 def main():
-    nagios = Nagios()
+    status = Status()
 
     parser = argparse.ArgumentParser(
         add_help=False,
-        description="Nagios probe checking logfile messages"
+        description="ARGO probe checking logfile messages"
     )
     required = parser.add_argument_group("required arguments")
     optional = parser.add_argument_group("optional arguments")
@@ -44,28 +44,28 @@ def main():
 
         if log.check_file_exists():
             if log.check_format_ok():
-                nagios.ok(log.check_messages())
+                status.ok(log.check_messages())
 
             else:
-                nagios.critical("Wrong log file format")
+                status.critical("Wrong log file format")
 
         else:
-            nagios.critical(f"Log file {args.file} does not exist")
+            status.critical(f"Log file {args.file} does not exist")
 
     except CriticalException as e:
-        nagios.critical(str(e))
+        status.critical(str(e))
 
     except WarnException as e:
-        nagios.warning(str(e))
+        status.warning(str(e))
 
     except TimeoutError:
-        nagios.critical("Timeout")
+        status.critical("Timeout")
 
     except Exception as e:
-        nagios.unknown(str(e))
+        status.unknown(str(e))
 
-    print(nagios.get_msg())
-    sys.exit(nagios.get_code())
+    print(status.get_msg())
+    sys.exit(status.get_code())
 
 
 if __name__ == "__main__":

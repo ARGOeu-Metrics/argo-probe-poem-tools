@@ -4,7 +4,7 @@ import signal
 import sys
 
 from argo_probe_argo_tools.file import File
-from argo_probe_argo_tools.nagios import Nagios
+from argo_probe_argo_tools.status import Status
 from argo_probe_argo_tools.utils import CriticalException
 
 
@@ -25,10 +25,10 @@ class timeout:
 
 
 def main():
-    nagios = Nagios()
+    status = Status()
 
     parser = argparse.ArgumentParser(
-        description="Nagios probe for checking file age and content; it raises "
+        description="ARGO probe for checking file age and content; it raises "
                     "critical status if file age is greater than maximum "
                     "acceptable age or the requested content is not found in "
                     "the file",
@@ -69,22 +69,22 @@ def main():
                 filecheck.check_age(age=args.time)
                 filecheck.check_content(string=args.string)
 
-                nagios.ok("File is OK")
+                status.ok("File is OK")
 
             else:
-                nagios.critical(f"File {args.file} does not exist")
+                status.critical(f"File {args.file} does not exist")
 
     except CriticalException as e:
-        nagios.critical(str(e))
+        status.critical(str(e))
 
     except TimeoutError:
-        nagios.critical("Timeout")
+        status.critical("Timeout")
 
     except Exception as e:
-        nagios.unknown(str(e))
+        status.unknown(str(e))
 
-    print(nagios.get_msg())
-    sys.exit(nagios.get_code())
+    print(status.get_msg())
+    sys.exit(status.get_code())
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-class Nagios:
+class Status:
     OK = 0
     WARNING = 1
     CRITICAL = 2
