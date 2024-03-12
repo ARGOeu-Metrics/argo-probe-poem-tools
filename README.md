@@ -1,9 +1,10 @@
 # argo-probe-poem-tools
 
-The package contains two probes: 
+The package contains three probes: 
 
 * `check_log` - probe is inspecting the application log file for errors;
-* `check_file` - probe is inspecting file for content and checking its age.
+* `check_file` - probe is inspecting file for content and checking its age;
+* `check_dirsize.sh` - probe determines the size of a directory (including subdirectories) and compares it with the supplied thresholds.
 
 ## Synopsis
 
@@ -71,4 +72,15 @@ Example execution of the probe:
 ```
 /usr/libexec/argo/probes/argo_tools/check_file -f /var/log/ncg.log -T 2 -s "No serious problems were detected during the pre-flight check" -t 30
 OK - File is OK
+```
+
+### `check_dirsize.sh` probe
+
+The probe determines the size of a directory (including subdirectories) and compares it with the supplied thresholds (must be defined in KB). It prints the size of the directory in KB followed by "ok" or either "warning" or "critical" if the corresponding threshold is reached.
+
+Example execution of the probe:
+
+```
+/usr/libexec/argo/probes/argo_tools/check_dirsize.sh -d /var/spool/ams-publisher -w 10000 -c 100000 -f
+OK - /var/spool/ams-publisher size: 732 KB|'size'=732KB;10000;100000
 ```
