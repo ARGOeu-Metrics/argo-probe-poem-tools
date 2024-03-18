@@ -1,6 +1,7 @@
 import datetime
 import math
 import os
+import stat
 
 from argo_probe_argo_tools.utils import CriticalException
 
@@ -27,6 +28,10 @@ class File:
 
     def is_directory(self):
         return self._exist() and os.path.isdir(self.filename)
+
+    def is_socket(self):
+        mode = os.lstat(self.filename).st_mode
+        return self._exist() and stat.S_ISSOCK(mode)
 
     def _get_file_age(self):
         return os.path.getmtime(self.filename)

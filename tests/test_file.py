@@ -1,5 +1,6 @@
 import datetime
 import os
+import socket
 import unittest
 from unittest.mock import patch
 
@@ -39,15 +40,25 @@ class FileTests(unittest.TestCase):
     def setUp(self) -> None:
         self.filename = "mock_file.log"
         self.directory = "mock_directory"
+        self.socket_name = "mock_socket"
 
         with open(self.filename, "w") as f:
             f.write(mock_file_content)
 
-        os.mkdir(self.directory)
+        if not os.path.exists(self.directory):
+            os.mkdir(self.directory)
+
+        try:
+            self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.socket.bind(self.socket_name)
+
+        except OSError:
+            pass
 
         self.filecheck = File(filename=self.filename)
         self.nonexisting_filecheck = File(filename="nonexisting")
         self.dircheck = File(filename=self.directory)
+        self.socketcheck = File(filename=self.socket_name)
 
     def tearDown(self) -> None:
         if os.path.exists(self.filename):
@@ -56,15 +67,27 @@ class FileTests(unittest.TestCase):
         if os.path.exists(self.directory):
             os.rmdir(self.directory)
 
+        self.socket.close()
+
+        if os.path.exists(self.socket_name):
+            os.remove(self.socket_name)
+
     def test_is_file(self):
         self.assertTrue(self.filecheck.is_file())
         self.assertFalse(self.nonexisting_filecheck.is_file())
         self.assertFalse(self.dircheck.is_file())
+        self.assertFalse(self.socketcheck.is_file())
 
     def test_is_directory(self):
         self.assertFalse(self.filecheck.is_directory())
         self.assertFalse(self.nonexisting_filecheck.is_directory())
         self.assertTrue(self.dircheck.is_directory())
+        self.assertFalse(self.socketcheck.is_directory())
+
+    def test_is_socket(self):
+        self.assertFalse(self.filecheck.is_socket())
+        self.assertFalse(self.dircheck.is_socket())
+        self.assertTrue(self.socketcheck.is_socket())
 
     @patch("argo_probe_argo_tools.file.now_epoch")
     def test_age(self, mock_now):
