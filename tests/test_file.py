@@ -337,14 +337,42 @@ class FileTests(unittest.TestCase):
 class TextFileTests(unittest.TestCase):
     def setUp(self):
         self.filename = "mock_file"
+        self.fifo = "mock_fifo"
+
         with open(self.filename, "w") as f:
             f.write(mock_file_content)
+
+        try:
+            os.mkfifo(self.fifo)
+
+        except OSError:
+            pass
 
         self.parse = TextFile(filename=self.filename)
 
     def tearDown(self):
         if os.path.exists(self.filename):
             os.remove(self.filename)
+
+        if os.path.exists(self.fifo):
+            os.remove(self.fifo)
+
+    def test_missing_file(self):
+        with self.assertRaises(CriticalException) as context:
+            TextFile(filename="nonexisting")
+
+        self.assertEqual(
+            context.exception.__str__(),
+            "No such file or directory: 'nonexisting'"
+        )
+
+    def test_non_text_file(self):
+        with self.assertRaises(CriticalException) as context:
+            TextFile(filename=self.fifo)
+
+        self.assertEqual(
+            context.exception.__str__(), "File 'mock_fifo' is not a text file"
+        )
 
     @patch("argo_probe_argo_tools.file.now_epoch")
     def test_age(self, mock_now):

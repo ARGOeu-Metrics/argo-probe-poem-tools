@@ -53,6 +53,22 @@ class TextFile:
     def __init__(self, filename):
         self.filename = filename
 
+        if not self._exists():
+            raise CriticalException(
+                f"No such file or directory: '{self.filename}'"
+            )
+
+        if not self._is_file():
+            raise CriticalException(
+                f"File '{self.filename}' is not a text file"
+            )
+
+    def _exists(self):
+        return os.path.exists(self.filename)
+
+    def _is_file(self):
+        return os.path.isfile(self.filename)
+
     def _read(self):
         with open(self.filename, "r") as f:
             data = [line for line in f.readlines()]
