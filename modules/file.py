@@ -27,9 +27,6 @@ class File:
 
         return "\n".join(data)
 
-    def _exist(self):
-        return os.path.exists(self.filename)
-
     def is_file(self):
         return os.path.isfile(self.filename)
 
