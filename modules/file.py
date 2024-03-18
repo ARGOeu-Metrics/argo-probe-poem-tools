@@ -14,6 +14,7 @@ def now_epoch():
 class File:
     def __init__(self, filename):
         self.filename = filename
+        self.path = pathlib.Path(self.filename)
         try:
             self.mode = os.lstat(self.filename).st_mode
 
@@ -42,8 +43,10 @@ class File:
         return stat.S_ISFIFO(self.mode)
 
     def check_owner(self, owner):
-        path = pathlib.Path(self.filename)
-        return path.owner() == owner
+        return self.path.owner() == owner
+
+    def check_group(self, group):
+        return self.path.group() == group
 
     def _get_file_age(self):
         return os.path.getmtime(self.filename)
