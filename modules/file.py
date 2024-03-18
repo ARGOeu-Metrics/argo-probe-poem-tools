@@ -51,6 +51,9 @@ class File:
     def is_readable(self):
         return bool(self.mode & stat.S_IRUSR) | bool(self.mode & stat.S_IRGRP)
 
+    def is_writable(self):
+        return bool(self.mode & stat.S_IWUSR) | bool(self.mode & stat.S_IWGRP)
+
     def _get_file_age(self):
         return os.path.getmtime(self.filename)
 
