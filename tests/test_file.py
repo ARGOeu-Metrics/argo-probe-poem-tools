@@ -114,6 +114,18 @@ class FileTests(unittest.TestCase):
         self.assertFalse(self.socketcheck.is_fifo())
         self.assertTrue(self.fifocheck.is_fifo())
 
+    @patch("argo_probe_argo_tools.file.pathlib.Path.owner")
+    def test_check_owner(self, mock_owner):
+        mock_owner.return_value = "test"
+        self.assertTrue(self.filecheck.check_owner("test"))
+        self.assertFalse(self.filecheck.check_owner("sensu"))
+        self.assertTrue(self.dircheck.check_owner("test"))
+        self.assertFalse(self.dircheck.check_owner("sensu"))
+        self.assertTrue(self.socketcheck.check_owner("test"))
+        self.assertFalse(self.socketcheck.check_owner("sensu"))
+        self.assertTrue(self.fifocheck.check_owner("test"))
+        self.assertFalse(self.fifocheck.check_owner("sensu"))
+
     @patch("argo_probe_argo_tools.file.now_epoch")
     def test_age(self, mock_now):
         mock_now.return_value = (

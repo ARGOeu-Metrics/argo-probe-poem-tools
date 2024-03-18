@@ -1,6 +1,7 @@
 import datetime
 import math
 import os
+import pathlib
 import stat
 
 from argo_probe_argo_tools.utils import CriticalException
@@ -39,6 +40,10 @@ class File:
 
     def is_fifo(self):
         return stat.S_ISFIFO(self.mode)
+
+    def check_owner(self, owner):
+        path = pathlib.Path(self.filename)
+        return path.owner() == owner
 
     def _get_file_age(self):
         return os.path.getmtime(self.filename)
