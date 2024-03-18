@@ -21,12 +21,6 @@ class File:
         except FileNotFoundError as e:
             raise CriticalException(str(e))
 
-    def _read(self):
-        with open(self.filename, "r") as f:
-            data = [line for line in f.readlines()]
-
-        return "\n".join(data)
-
     def is_file(self):
         return os.path.isfile(self.filename)
 
@@ -53,6 +47,17 @@ class File:
 
     def is_executable(self):
         return bool(self.mode & stat.S_IXUSR) | bool(self.mode & stat.S_IXGRP)
+
+
+class TextFile:
+    def __init__(self, filename):
+        self.filename = filename
+
+    def _read(self):
+        with open(self.filename, "r") as f:
+            data = [line for line in f.readlines()]
+
+        return "\n".join(data)
 
     def _get_file_age(self):
         return os.path.getmtime(self.filename)
