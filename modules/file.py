@@ -54,6 +54,9 @@ class File:
     def is_writable(self):
         return bool(self.mode & stat.S_IWUSR) | bool(self.mode & stat.S_IWGRP)
 
+    def is_executable(self):
+        return bool(self.mode & stat.S_IXUSR) | bool(self.mode & stat.S_IXGRP)
+
     def _get_file_age(self):
         return os.path.getmtime(self.filename)
 

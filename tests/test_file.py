@@ -277,6 +277,62 @@ class FileTests(unittest.TestCase):
         self.assertFalse(fsocket.is_writable())
         self.assertFalse(fifo.is_writable())
 
+    def test_is_executable_by_user_and_not_group(self):
+        os.chmod(self.filename2, 0o100)
+        os.chmod(self.directory2, 0o100)
+        os.chmod(self.socket_name2, 0o100)
+        os.chmod(self.fifo2, 0o100)
+        file = File(filename=self.filename2)
+        directory = File(filename=self.directory2)
+        fsocket = File(filename=self.socket_name2)
+        fifo = File(filename=self.fifo2)
+        self.assertTrue(file.is_executable())
+        self.assertTrue(directory.is_executable())
+        self.assertTrue(fsocket.is_executable())
+        self.assertTrue(fifo.is_executable())
+
+    def test_is_executable_by_group_and_not_user(self):
+        os.chmod(self.filename2, 0o010)
+        os.chmod(self.directory2, 0o010)
+        os.chmod(self.socket_name2, 0o010)
+        os.chmod(self.fifo2, 0o010)
+        file = File(filename=self.filename2)
+        directory = File(filename=self.directory2)
+        fsocket = File(filename=self.socket_name2)
+        fifo = File(filename=self.fifo2)
+        self.assertTrue(file.is_executable())
+        self.assertTrue(directory.is_executable())
+        self.assertTrue(fsocket.is_executable())
+        self.assertTrue(fifo.is_executable())
+
+    def test_is_executable_by_both_user_and_group(self):
+        os.chmod(self.filename2, 0o540)
+        os.chmod(self.directory2, 0o540)
+        os.chmod(self.socket_name2, 0o540)
+        os.chmod(self.fifo2, 0o540)
+        file = File(filename=self.filename2)
+        directory = File(filename=self.directory2)
+        fsocket = File(filename=self.socket_name2)
+        fifo = File(filename=self.fifo2)
+        self.assertTrue(file.is_executable())
+        self.assertTrue(directory.is_executable())
+        self.assertTrue(fsocket.is_executable())
+        self.assertTrue(fifo.is_executable())
+
+    def test_not_executable_by_anyone(self):
+        os.chmod(self.filename2, 0o400)
+        os.chmod(self.directory2, 0o400)
+        os.chmod(self.socket_name2, 0o400)
+        os.chmod(self.fifo2, 0o400)
+        file = File(filename=self.filename2)
+        directory = File(filename=self.directory2)
+        fsocket = File(filename=self.socket_name2)
+        fifo = File(filename=self.fifo2)
+        self.assertFalse(file.is_executable())
+        self.assertFalse(directory.is_executable())
+        self.assertFalse(fsocket.is_executable())
+        self.assertFalse(fifo.is_executable())
+
     @patch("argo_probe_argo_tools.file.now_epoch")
     def test_age(self, mock_now):
         mock_now.return_value = (
