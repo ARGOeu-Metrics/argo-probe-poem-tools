@@ -42,22 +42,36 @@ class FileTests(unittest.TestCase):
         self.directory = "mock_directory"
         self.socket_name = "mock_socket"
         self.fifo = "mock_fifo"
+        self.filename2 = "mock_file2.log"
+        self.directory2 = "mock_directory2"
+        self.socket_name2 = "mock_socket2"
+        self.fifo2 = "mock_fifo2"
 
         with open(self.filename, "w") as f:
             f.write(mock_file_content)
 
+        with open(self.filename2, "w") as f:
+            pass
+
         if not os.path.exists(self.directory):
             os.mkdir(self.directory)
+
+        if not os.path.exists(self.directory2):
+            os.mkdir(self.directory2)
 
         try:
             self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.socket.bind(self.socket_name)
+
+            self.socket2 = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.socket2.bind(self.socket_name2)
 
         except OSError:
             pass
 
         try:
             os.mkfifo(self.fifo)
+            os.mkfifo(self.fifo2)
 
         except OSError:
             pass
@@ -71,16 +85,29 @@ class FileTests(unittest.TestCase):
         if os.path.exists(self.filename):
             os.remove(self.filename)
 
+        if os.path.exists(self.filename2):
+            os.remove(self.filename2)
+
         if os.path.exists(self.directory):
             os.rmdir(self.directory)
 
+        if os.path.exists(self.directory2):
+            os.rmdir(self.directory2)
+
         self.socket.close()
+        self.socket2.close()
 
         if os.path.exists(self.socket_name):
             os.remove(self.socket_name)
 
+        if os.path.exists(self.socket_name2):
+            os.remove(self.socket_name2)
+
         if os.path.exists(self.fifo):
             os.remove(self.fifo)
+
+        if os.path.exists(self.fifo2):
+            os.remove(self.fifo2)
 
     def test_nonexisting(self):
         with self.assertRaises(CriticalException) as context:
@@ -137,6 +164,62 @@ class FileTests(unittest.TestCase):
         self.assertFalse(self.socketcheck.check_group("sensu"))
         self.assertTrue(self.fifocheck.check_group("test"))
         self.assertFalse(self.fifocheck.check_group("sensu"))
+
+    def test_is_readable_by_user_and_not_group(self):
+        os.chmod(self.filename2, 0o400)
+        os.chmod(self.directory2, 0o400)
+        os.chmod(self.socket_name2, 0o400)
+        os.chmod(self.fifo2, 0o400)
+        readable_file = File(filename=self.filename2)
+        readable_dir = File(filename=self.directory2)
+        readable_socket = File(filename=self.socket_name2)
+        readable_fifo = File(filename=self.fifo2)
+        self.assertTrue(readable_file.is_readable())
+        self.assertTrue(readable_dir.is_readable())
+        self.assertTrue(readable_socket.is_readable())
+        self.assertTrue(readable_fifo.is_readable())
+
+    def test_is_readable_by_group_and_not_user(self):
+        os.chmod(self.filename2, 0o140)
+        os.chmod(self.directory2, 0o140)
+        os.chmod(self.socket_name2, 0o140)
+        os.chmod(self.fifo2, 0o140)
+        readable_file = File(filename=self.filename2)
+        readable_dir = File(filename=self.directory2)
+        readable_socket = File(filename=self.socket_name2)
+        readable_fifo = File(filename=self.fifo2)
+        self.assertTrue(readable_file.is_readable())
+        self.assertTrue(readable_dir.is_readable())
+        self.assertTrue(readable_socket.is_readable())
+        self.assertTrue(readable_fifo.is_readable())
+
+    def test_is_readable_by_both_user_and_group(self):
+        os.chmod(self.filename2, 0o440)
+        os.chmod(self.directory2, 0o440)
+        os.chmod(self.socket_name2, 0o440)
+        os.chmod(self.fifo2, 0o440)
+        readable_file = File(filename=self.filename2)
+        readable_dir = File(filename=self.directory2)
+        readable_socket = File(filename=self.socket_name2)
+        readable_fifo = File(filename=self.fifo2)
+        self.assertTrue(readable_file.is_readable())
+        self.assertTrue(readable_dir.is_readable())
+        self.assertTrue(readable_socket.is_readable())
+        self.assertTrue(readable_fifo.is_readable())
+
+    def test_not_readable_by_anyone(self):
+        os.chmod(self.filename2, 0o100)
+        os.chmod(self.directory2, 0o100)
+        os.chmod(self.socket_name2, 0o100)
+        os.chmod(self.fifo2, 0o100)
+        readable_file = File(filename=self.filename2)
+        readable_dir = File(filename=self.directory2)
+        readable_socket = File(filename=self.socket_name2)
+        readable_fifo = File(filename=self.fifo2)
+        self.assertFalse(readable_file.is_readable())
+        self.assertFalse(readable_dir.is_readable())
+        self.assertFalse(readable_socket.is_readable())
+        self.assertFalse(readable_fifo.is_readable())
 
     @patch("argo_probe_argo_tools.file.now_epoch")
     def test_age(self, mock_now):

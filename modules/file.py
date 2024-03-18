@@ -42,11 +42,14 @@ class File:
     def is_fifo(self):
         return stat.S_ISFIFO(self.mode)
 
-    def check_owner(self, owner):
-        return self.path.owner() == owner
+    def check_owner(self, user):
+        return self.path.owner() == user
 
     def check_group(self, group):
         return self.path.group() == group
+
+    def is_readable(self):
+        return bool(self.mode & stat.S_IRUSR) | bool(self.mode & stat.S_IRGRP)
 
     def _get_file_age(self):
         return os.path.getmtime(self.filename)
