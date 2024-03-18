@@ -1,7 +1,8 @@
 import datetime
+import os
 import time
 
-from argo_probe_argo_tools.utils import does_file_exist, WarnException, \
+from argo_probe_argo_tools.utils import WarnException, \
     CriticalException
 
 
@@ -17,7 +18,7 @@ class Log:
         self.timeout = datetime.timedelta(seconds=timeout)
 
     def check_file_exists(self):
-        return does_file_exist(self.logfile)
+        return os.path.exists(self.logfile) and os.path.isfile(self.logfile)
 
     def _read(self):
         data = list()

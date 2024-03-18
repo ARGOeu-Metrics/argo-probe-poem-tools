@@ -1,0 +1,70 @@
+#!/usr/bin/python3
+import argparse
+import sys
+
+from argo_probe_argo_tools.file import TextFile
+from argo_probe_argo_tools.status import Status
+from argo_probe_argo_tools.utils import CriticalException, timeout
+
+
+def main():
+    status = Status()
+
+    parser = argparse.ArgumentParser(
+        description="ARGO probe that checks text file age and content; it "
+                    "raises critical status if file age is greater than "
+                    "maximum acceptable age or the requested content is not "
+                    "found in the file",
+        usage="parse_file [-h] -f FILE -T TIME -s STRING [-t TIMEOUT]",
+        add_help=False
+    )
+    required = parser.add_argument_group("required arguments")
+    optional = parser.add_argument_group("optional arguments")
+    required.add_argument(
+        "-f", "--file", type=str, dest="file", required=True,
+        help="Location of file being checked"
+    )
+    required.add_argument(
+        "-T", "--time", type=int, dest="time", required=True,
+        help="Maximum acceptable time (in hours) since file was last modified"
+    )
+    required.add_argument(
+        "-s", "--string", type=str, dest="string", required=True,
+        help="The string which must exist in the file if the probe is to "
+             "return OK status"
+    )
+    optional.add_argument(
+        "-t", "--timeout", type=int, dest="timeout", default=10,
+        help="Time in seconds after which the probe will stop execution and "
+             "return CRITICAL (default: 10)"
+    )
+    optional.add_argument(
+        "-h", "--help", action="help", default=argparse.SUPPRESS,
+        help="Show this help message and exit"
+    )
+    args = parser.parse_args()
+
+    try:
+        with timeout(seconds=args.timeout):
+            filecheck = TextFile(filename=args.file)
+
+            filecheck.check_age(age=args.time)
+            filecheck.check_content(string=args.string)
+
+            status.ok("File is OK")
+
+    except CriticalException as e:
+        status.critical(str(e))
+
+    except TimeoutError:
+        status.critical("Timeout")
+
+    except Exception as e:
+        status.unknown(str(e))
+
+    print(status.get_msg())
+    sys.exit(status.get_code())
+
+
+if __name__ == "__main__":
+    main()
