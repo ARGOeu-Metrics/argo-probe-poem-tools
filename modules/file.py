@@ -13,6 +13,11 @@ def now_epoch():
 class File:
     def __init__(self, filename):
         self.filename = filename
+        try:
+            self.mode = os.lstat(self.filename).st_mode
+
+        except FileNotFoundError as e:
+            raise CriticalException(str(e))
 
     def _read(self):
         with open(self.filename, "r") as f:
@@ -24,14 +29,13 @@ class File:
         return os.path.exists(self.filename)
 
     def is_file(self):
-        return self._exist() and os.path.isfile(self.filename)
+        return os.path.isfile(self.filename)
 
     def is_directory(self):
-        return self._exist() and os.path.isdir(self.filename)
+        return stat.S_ISDIR(self.mode)
 
     def is_socket(self):
-        mode = os.lstat(self.filename).st_mode
-        return self._exist() and stat.S_ISSOCK(mode)
+        return stat.S_ISSOCK(self.mode)
 
     def _get_file_age(self):
         return os.path.getmtime(self.filename)

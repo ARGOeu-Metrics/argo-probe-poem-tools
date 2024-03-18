@@ -56,7 +56,6 @@ class FileTests(unittest.TestCase):
             pass
 
         self.filecheck = File(filename=self.filename)
-        self.nonexisting_filecheck = File(filename="nonexisting")
         self.dircheck = File(filename=self.directory)
         self.socketcheck = File(filename=self.socket_name)
 
@@ -72,15 +71,21 @@ class FileTests(unittest.TestCase):
         if os.path.exists(self.socket_name):
             os.remove(self.socket_name)
 
+    def test_nonexisting(self):
+        with self.assertRaises(CriticalException) as context:
+            File(filename="nonexisting")
+        self.assertEqual(
+            context.exception.__str__(),
+            "[Errno 2] No such file or directory: 'nonexisting'"
+        )
+
     def test_is_file(self):
         self.assertTrue(self.filecheck.is_file())
-        self.assertFalse(self.nonexisting_filecheck.is_file())
         self.assertFalse(self.dircheck.is_file())
         self.assertFalse(self.socketcheck.is_file())
 
     def test_is_directory(self):
         self.assertFalse(self.filecheck.is_directory())
-        self.assertFalse(self.nonexisting_filecheck.is_directory())
         self.assertTrue(self.dircheck.is_directory())
         self.assertFalse(self.socketcheck.is_directory())
 
