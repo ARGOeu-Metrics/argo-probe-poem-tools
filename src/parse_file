@@ -1,38 +1,21 @@
 #!/usr/bin/python3
 import argparse
-import signal
 import sys
 
-from argo_probe_argo_tools.file import File
+from argo_probe_argo_tools.file import TextFile
 from argo_probe_argo_tools.status import Status
-from argo_probe_argo_tools.utils import CriticalException
-
-
-class timeout:
-    def __init__(self, seconds=1, error_message="Timeout"):
-        self.seconds = seconds
-        self.error_message = error_message
-
-    def handle_timeout(self, signum, frame):
-        raise TimeoutError(self.error_message)
-
-    def __enter__(self):
-        signal.signal(signal.SIGALRM, self.handle_timeout)
-        signal.alarm(self.seconds)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        signal.alarm(0)
+from argo_probe_argo_tools.utils import CriticalException, timeout
 
 
 def main():
     status = Status()
 
     parser = argparse.ArgumentParser(
-        description="ARGO probe for checking file age and content; it raises "
-                    "critical status if file age is greater than maximum "
-                    "acceptable age or the requested content is not found in "
-                    "the file",
-        usage="check_file [-h] -f FILE -T TIME -s STRING [-t TIMEOUT]",
+        description="ARGO probe that checks text file age and content; it "
+                    "raises critical status if file age is greater than "
+                    "maximum acceptable age or the requested content is not "
+                    "found in the file",
+        usage="parse_file [-h] -f FILE -T TIME -s STRING [-t TIMEOUT]",
         add_help=False
     )
     required = parser.add_argument_group("required arguments")
@@ -63,16 +46,12 @@ def main():
 
     try:
         with timeout(seconds=args.timeout):
-            filecheck = File(filename=args.file)
+            filecheck = TextFile(filename=args.file)
 
-            if filecheck.check_existence():
-                filecheck.check_age(age=args.time)
-                filecheck.check_content(string=args.string)
+            filecheck.check_age(age=args.time)
+            filecheck.check_content(string=args.string)
 
-                status.ok("File is OK")
-
-            else:
-                status.critical(f"File {args.file} does not exist")
+            status.ok("File is OK")
 
     except CriticalException as e:
         status.critical(str(e))
