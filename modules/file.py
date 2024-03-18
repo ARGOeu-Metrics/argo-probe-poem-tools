@@ -37,6 +37,9 @@ class File:
     def is_socket(self):
         return stat.S_ISSOCK(self.mode)
 
+    def is_fifo(self):
+        return stat.S_ISFIFO(self.mode)
+
     def _get_file_age(self):
         return os.path.getmtime(self.filename)
 

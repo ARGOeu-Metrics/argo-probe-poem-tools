@@ -41,6 +41,7 @@ class FileTests(unittest.TestCase):
         self.filename = "mock_file.log"
         self.directory = "mock_directory"
         self.socket_name = "mock_socket"
+        self.fifo = "mock_fifo"
 
         with open(self.filename, "w") as f:
             f.write(mock_file_content)
@@ -55,9 +56,16 @@ class FileTests(unittest.TestCase):
         except OSError:
             pass
 
+        try:
+            os.mkfifo(self.fifo)
+
+        except OSError:
+            pass
+
         self.filecheck = File(filename=self.filename)
         self.dircheck = File(filename=self.directory)
         self.socketcheck = File(filename=self.socket_name)
+        self.fifocheck = File(filename=self.fifo)
 
     def tearDown(self) -> None:
         if os.path.exists(self.filename):
@@ -71,6 +79,9 @@ class FileTests(unittest.TestCase):
         if os.path.exists(self.socket_name):
             os.remove(self.socket_name)
 
+        if os.path.exists(self.fifo):
+            os.remove(self.fifo)
+
     def test_nonexisting(self):
         with self.assertRaises(CriticalException) as context:
             File(filename="nonexisting")
@@ -83,16 +94,25 @@ class FileTests(unittest.TestCase):
         self.assertTrue(self.filecheck.is_file())
         self.assertFalse(self.dircheck.is_file())
         self.assertFalse(self.socketcheck.is_file())
+        self.assertFalse(self.fifocheck.is_file())
 
     def test_is_directory(self):
         self.assertFalse(self.filecheck.is_directory())
         self.assertTrue(self.dircheck.is_directory())
         self.assertFalse(self.socketcheck.is_directory())
+        self.assertFalse(self.fifocheck.is_directory())
 
     def test_is_socket(self):
         self.assertFalse(self.filecheck.is_socket())
         self.assertFalse(self.dircheck.is_socket())
         self.assertTrue(self.socketcheck.is_socket())
+        self.assertFalse(self.fifocheck.is_socket())
+
+    def test_is_fifo(self):
+        self.assertFalse(self.filecheck.is_fifo())
+        self.assertFalse(self.dircheck.is_fifo())
+        self.assertFalse(self.socketcheck.is_fifo())
+        self.assertTrue(self.fifocheck.is_fifo())
 
     @patch("argo_probe_argo_tools.file.now_epoch")
     def test_age(self, mock_now):
