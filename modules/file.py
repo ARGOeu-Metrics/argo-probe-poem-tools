@@ -2,7 +2,7 @@ import datetime
 import math
 import os
 
-from argo_probe_argo_tools.utils import does_file_exist, CriticalException
+from argo_probe_argo_tools.utils import CriticalException
 
 
 def now_epoch():
@@ -19,8 +19,14 @@ class File:
 
         return "\n".join(data)
 
-    def check_existence(self):
-        return does_file_exist(self.filename)
+    def _exist(self):
+        return os.path.exists(self.filename)
+
+    def is_file(self):
+        return self._exist() and os.path.isfile(self.filename)
+
+    def is_directory(self):
+        return self._exist() and os.path.isdir(self.filename)
 
     def _get_file_age(self):
         return os.path.getmtime(self.filename)

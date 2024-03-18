@@ -38,20 +38,33 @@ Redirecting to /bin/systemctl restart nagios.service
 class FileTests(unittest.TestCase):
     def setUp(self) -> None:
         self.filename = "mock_file.log"
+        self.directory = "mock_directory"
 
         with open(self.filename, "w") as f:
             f.write(mock_file_content)
 
+        os.mkdir(self.directory)
+
         self.filecheck = File(filename=self.filename)
         self.nonexisting_filecheck = File(filename="nonexisting")
+        self.dircheck = File(filename=self.directory)
 
     def tearDown(self) -> None:
         if os.path.exists(self.filename):
             os.remove(self.filename)
 
-    def test_file_existence(self):
-        self.assertTrue(self.filecheck.check_existence())
-        self.assertFalse(self.nonexisting_filecheck.check_existence())
+        if os.path.exists(self.directory):
+            os.rmdir(self.directory)
+
+    def test_is_file(self):
+        self.assertTrue(self.filecheck.is_file())
+        self.assertFalse(self.nonexisting_filecheck.is_file())
+        self.assertFalse(self.dircheck.is_file())
+
+    def test_is_directory(self):
+        self.assertFalse(self.filecheck.is_directory())
+        self.assertFalse(self.nonexisting_filecheck.is_directory())
+        self.assertTrue(self.dircheck.is_directory())
 
     @patch("argo_probe_argo_tools.file.now_epoch")
     def test_age(self, mock_now):
