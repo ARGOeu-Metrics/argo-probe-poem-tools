@@ -1,58 +1,64 @@
 #!/usr/bin/python3
 import argparse
-import signal
 import sys
 
 from argo_probe_argo_tools.file import File
-from argo_probe_argo_tools.nagios import Nagios
-from argo_probe_argo_tools.utils import CriticalException
-
-
-class timeout:
-    def __init__(self, seconds=1, error_message="Timeout"):
-        self.seconds = seconds
-        self.error_message = error_message
-
-    def handle_timeout(self, signum, frame):
-        raise TimeoutError(self.error_message)
-
-    def __enter__(self):
-        signal.signal(signal.SIGALRM, self.handle_timeout)
-        signal.alarm(self.seconds)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        signal.alarm(0)
+from argo_probe_argo_tools.status import Status
+from argo_probe_argo_tools.utils import CriticalException, timeout
 
 
 def main():
-    nagios = Nagios()
+    status = Status()
 
     parser = argparse.ArgumentParser(
-        description="Nagios probe for checking file age and content; it raises "
-                    "critical status if file age is greater than maximum "
-                    "acceptable age or the requested content is not found in "
-                    "the file",
-        usage="check_file [-h] -f FILE -T TIME -s STRING [-t TIMEOUT]",
+        description="ARGO probe that checks file properties; by default, it "
+                    "checks only if it exists",
+        usage="check_file [-h] -F FILE [-f|-d|-s|-p] [-o OWNER] "
+              "[-g GROUP] [-r] [-w] [-x] [-t TIMEOUT]",
         add_help=False
     )
-    required = parser.add_argument_group("required arguments")
-    optional = parser.add_argument_group("optional arguments")
+    required = parser.add_argument_group("required")
+    optional = parser.add_argument_group("optional")
     required.add_argument(
-        "-f", "--file", type=str, dest="file", required=True,
-        help="Location of file being checked"
+        "-F", "--file", type=str, dest="file", required=True,
+        help="file to check"
     )
-    required.add_argument(
-        "-T", "--time", type=int, dest="time", required=True,
-        help="Maximum acceptable time (in hours) since file was last modified"
+    filetype = optional.add_mutually_exclusive_group()
+    filetype.add_argument(
+        "-f", action="store_true", dest="is_plain", help="is it a plain file"
     )
-    required.add_argument(
-        "-s", "--string", type=str, dest="string", required=True,
-        help="The string which must exist in the file if the probe is to "
-             "return OK status"
+    filetype.add_argument(
+        "-d", action="store_true", dest="is_directory", help="is it a directory"
+    )
+    filetype.add_argument(
+        "-s", action="store_true", dest="is_socket", help="is it a socket"
+    )
+    filetype.add_argument(
+        "-p", action="store_true", dest="is_pipe", help="is it a named pipe"
+    )
+    optional.add_argument(
+        "-o", "--owner", type=str, dest="owner",
+        help="is the file owner matching the one given"
+    )
+    optional.add_argument(
+        "-g", "--group", type=str, dest="group",
+        help="is the file group matching the one given"
+    )
+    optional.add_argument(
+        "-r", action="store_true", dest="readable",
+        help="is it user-or-group readable"
+    )
+    optional.add_argument(
+        "-w", action="store_true", dest="writable",
+        help="is it user-or-group writable"
+    )
+    optional.add_argument(
+        "-x", action="store_true", dest="executable",
+        help="is it user-or-group executable"
     )
     optional.add_argument(
         "-t", "--timeout", type=int, dest="timeout", default=10,
-        help="Time in seconds after which the probe will stop execution and "
+        help="time in seconds after which the probe will stop execution and "
              "return CRITICAL (default: 10)"
     )
     optional.add_argument(
@@ -63,28 +69,61 @@ def main():
 
     try:
         with timeout(seconds=args.timeout):
-            filecheck = File(filename=args.file)
+            check = File(filename=args.file)
 
-            if filecheck.check_existence():
-                filecheck.check_age(age=args.time)
-                filecheck.check_content(string=args.string)
+            status.ok(f"File OK")
 
-                nagios.ok("File is OK")
+            if args.is_plain:
+                if not check.is_file():
+                    raise CriticalException(f"File is not a plain file")
 
-            else:
-                nagios.critical(f"File {args.file} does not exist")
+            if args.is_directory:
+                if not check.is_directory():
+                    raise CriticalException(f"File is not a directory")
+
+            if args.is_socket:
+                if not check.is_socket():
+                    raise CriticalException(f"File is not a socket")
+
+            if args.is_pipe:
+                if not check.is_fifo():
+                    raise CriticalException(f"File is not a named pipe")
+
+            if args.owner:
+                if not check.check_owner(user=args.owner):
+                    raise CriticalException(
+                        f"File owner does not match '{args.owner}'"
+                    )
+
+            if args.group:
+                if not check.check_group(group=args.group):
+                    raise CriticalException(
+                        f"File group does not match '{args.group}'"
+                    )
+
+            if args.readable:
+                if not check.is_readable():
+                    raise CriticalException(f"File is not readable")
+
+            if args.writable:
+                if not check.is_writable():
+                    raise CriticalException(f"File is not writable")
+
+            if args.executable:
+                if not check.is_executable():
+                    raise CriticalException(f"File is not executable")
 
     except CriticalException as e:
-        nagios.critical(str(e))
+        status.critical(str(e))
 
     except TimeoutError:
-        nagios.critical("Timeout")
+        status.critical("Timeout")
 
     except Exception as e:
-        nagios.unknown(str(e))
+        status.unknown(str(e))
 
-    print(nagios.get_msg())
-    sys.exit(nagios.get_code())
+    print(status.get_msg())
+    sys.exit(status.get_code())
 
 
 if __name__ == "__main__":
